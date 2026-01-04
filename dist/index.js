@@ -53,12 +53,17 @@ export function setVisitorId(id) {
 }
 /**
  * Get the current visitor ID.
- * Priority: custom ID > localStorage
+ * Priority: custom ID > localStorage > generated UUID (SSR fallback)
  */
 export function getVisitorId() {
     // Use custom ID if set (for authenticated users)
     if (customVisitorId) {
         return customVisitorId;
+    }
+    // SSR check - localStorage only exists in browser
+    if (typeof window === "undefined" || typeof localStorage === "undefined") {
+        // Return a temporary UUID for SSR - will be replaced client-side
+        return generateUUID();
     }
     // Use localStorage for anonymous visitors
     let visitorId = localStorage.getItem(VISITOR_STORAGE_KEY);
@@ -70,9 +75,17 @@ export function getVisitorId() {
 }
 /** Get common headers for API requests */
 function getHeaders(siteKey) {
+    let visitorId;
+    try {
+        visitorId = getVisitorId();
+    }
+    catch {
+        // Fallback if localStorage access fails (e.g., private browsing, SSR)
+        visitorId = generateUUID();
+    }
     return {
         "X-Seriph-Key": siteKey,
-        "X-Seriph-Visitor": getVisitorId(),
+        "X-Seriph-Visitor": visitorId,
     };
 }
 export async function submitForm(options) {

@@ -61,7 +61,7 @@ export declare function getSiteKey(config: SeriphConfig): string;
 export declare function setVisitorId(id: string | null): void;
 /**
  * Get the current visitor ID.
- * Priority: custom ID > localStorage
+ * Priority: custom ID > localStorage > generated UUID (SSR fallback)
  */
 export declare function getVisitorId(): string;
 export interface SubmitFormOptions extends SeriphConfig {
