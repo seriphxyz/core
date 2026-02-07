@@ -1,15 +1,15 @@
 /**
- * @seriphxyz/core
+ * @jamwidgets/core
  *
- * Framework-agnostic API client, types, and controllers for Seriph widgets.
- * Use this package directly or through framework-specific wrappers like @seriphxyz/astro.
+ * Framework-agnostic API client, types, and controllers for Jamwidgets.
+ * Use this package directly or through framework-specific wrappers like @jamwidgets/astro.
  */
 // =============================================================================
 // Constants
 // =============================================================================
-export const DEFAULT_ENDPOINT = "https://seriph.xyz";
+export const DEFAULT_ENDPOINT = "https://jamwidgets.com";
 export const API_PATH = "/api/v1";
-export const VISITOR_STORAGE_KEY = "seriph_visitor_id";
+export const VISITOR_STORAGE_KEY = "jamwidgets_visitor_id";
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -19,14 +19,16 @@ export function buildUrl(endpoint, path) {
     return `${base}${API_PATH}${path}`;
 }
 /**
- * Read Seriph config from meta tags in the document head.
+ * Read Jamwidgets config from meta tags in the document head.
  * Looks for:
- * - <meta name="seriph-site-key" content="sk-xxx" />
- * - <meta name="seriph-endpoint" content="https://..." /> (optional)
+ * - <meta name="jamwidgets-site-key" content="sk-xxx" />
+ * - <meta name="jamwidgets-endpoint" content="https://..." /> (optional)
+ *
+ * Also supports legacy meta tag names (seriph-site-key, seriph-endpoint) for backward compatibility.
  *
  * @example
  * // In your HTML head:
- * <meta name="seriph-site-key" content="sk-xxx" />
+ * <meta name="jamwidgets-site-key" content="sk-xxx" />
  *
  * // In your JS:
  * const config = getConfigFromMeta();
@@ -38,12 +40,15 @@ export function getConfigFromMeta() {
     if (typeof document === "undefined") {
         return null;
     }
-    const siteKeyMeta = document.querySelector('meta[name="seriph-site-key"]');
+    // Try new meta tag names first, fall back to legacy names
+    const siteKeyMeta = document.querySelector('meta[name="jamwidgets-site-key"]') ||
+        document.querySelector('meta[name="seriph-site-key"]');
     const siteKey = siteKeyMeta?.getAttribute("content");
     if (!siteKey) {
         return null;
     }
-    const endpointMeta = document.querySelector('meta[name="seriph-endpoint"]');
+    const endpointMeta = document.querySelector('meta[name="jamwidgets-endpoint"]') ||
+        document.querySelector('meta[name="seriph-endpoint"]');
     const endpoint = endpointMeta?.getAttribute("content") || undefined;
     return { siteKey, endpoint };
 }
@@ -57,14 +62,14 @@ export function getSiteKey(config) {
     if (metaConfig?.siteKey) {
         return metaConfig.siteKey;
     }
-    throw new Error("siteKey is required. Either pass it as a prop or add <meta name=\"seriph-site-key\" content=\"your-key\" /> to your document head.");
+    throw new Error("siteKey is required. Either pass it as a prop or add <meta name=\"jamwidgets-site-key\" content=\"your-key\" /> to your document head.");
 }
 /** Resolve full config, merging props with meta tag fallbacks */
 export function resolveConfig(config) {
     const metaConfig = getConfigFromMeta();
     const siteKey = config.siteKey || metaConfig?.siteKey;
     if (!siteKey) {
-        throw new Error("siteKey is required. Either pass it as a prop or add <meta name=\"seriph-site-key\" content=\"your-key\" /> to your document head.");
+        throw new Error("siteKey is required. Either pass it as a prop or add <meta name=\"jamwidgets-site-key\" content=\"your-key\" /> to your document head.");
     }
     return {
         siteKey,
@@ -130,6 +135,9 @@ function getHeaders(siteKey) {
         visitorId = generateUUID();
     }
     return {
+        "X-Jamwidgets-Key": siteKey,
+        "X-Jamwidgets-Visitor": visitorId,
+        // Legacy headers for backward compatibility with older server versions
         "X-Seriph-Key": siteKey,
         "X-Seriph-Visitor": visitorId,
     };

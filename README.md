@@ -1,24 +1,24 @@
-# @seriphxyz/core
+# @jamwidgets/core
 
 > **Note:** This repo is a read-only mirror. Source lives in a private monorepo.
 > For issues/PRs, please open them here and we'll sync changes back.
 
-Framework-agnostic API client, types, and headless controllers for [Seriph](https://seriph.xyz) widgets.
+Framework-agnostic API client, types, and headless controllers for [JamWidgets](https://jamwidgets.com) widgets.
 
 ## Installation
 
 ```bash
-npm install @seriphxyz/core
+npm install @jamwidgets/core
 ```
 
-This is the base package used by `@seriphxyz/astro`, `@seriphxyz/react`, and `@seriphxyz/solid`. Use it directly when building custom integrations or with any JavaScript framework.
+This is the base package used by `@jamwidgets/astro`, `@jamwidgets/react`, and `@jamwidgets/solid`. Use it directly when building custom integrations or with any JavaScript framework.
 
 ## API Functions
 
 ### Comments
 
 ```ts
-import { fetchComments, postComment } from "@seriphxyz/core";
+import { fetchComments, postComment } from "@jamwidgets/core";
 
 // Fetch comments for a page
 const comments = await fetchComments({
@@ -40,7 +40,7 @@ await postComment({
 ### Reactions
 
 ```ts
-import { fetchReactions, addReaction, removeReaction } from "@seriphxyz/core";
+import { fetchReactions, addReaction, removeReaction } from "@jamwidgets/core";
 
 // Fetch reactions for a page
 const { counts, userReactions } = await fetchReactions({
@@ -66,7 +66,7 @@ await removeReaction({
 ### Forms
 
 ```ts
-import { submitForm } from "@seriphxyz/core";
+import { submitForm } from "@jamwidgets/core";
 
 await submitForm({
   siteKey: "your-key",
@@ -82,7 +82,7 @@ await submitForm({
 ### Subscriptions
 
 ```ts
-import { subscribe } from "@seriphxyz/core";
+import { subscribe } from "@jamwidgets/core";
 
 await subscribe({
   siteKey: "your-key",
@@ -93,7 +93,7 @@ await subscribe({
 ### Waitlist
 
 ```ts
-import { joinWaitlist } from "@seriphxyz/core";
+import { joinWaitlist } from "@jamwidgets/core";
 
 await joinWaitlist({
   siteKey: "your-key",
@@ -106,7 +106,7 @@ await joinWaitlist({
 ### Feedback
 
 ```ts
-import { submitFeedback } from "@seriphxyz/core";
+import { submitFeedback } from "@jamwidgets/core";
 
 await submitFeedback({
   siteKey: "your-key",
@@ -120,7 +120,7 @@ await submitFeedback({
 ### Polls
 
 ```ts
-import { fetchPoll, votePoll } from "@seriphxyz/core";
+import { fetchPoll, votePoll } from "@jamwidgets/core";
 
 // Fetch poll data
 const poll = await fetchPoll({
@@ -139,7 +139,7 @@ await votePoll({
 ### Views
 
 ```ts
-import { getViewCounts, recordView } from "@seriphxyz/core";
+import { getViewCounts, recordView } from "@jamwidgets/core";
 
 // Get view counts
 const { views, uniqueVisitors } = await getViewCounts({
@@ -157,7 +157,7 @@ await recordView({
 ### Announcements
 
 ```ts
-import { fetchAnnouncements, dismissAnnouncement } from "@seriphxyz/core";
+import { fetchAnnouncements, dismissAnnouncement } from "@jamwidgets/core";
 
 // Fetch active announcements
 const announcements = await fetchAnnouncements({
@@ -174,7 +174,7 @@ await dismissAnnouncement({
 ### Posts
 
 ```ts
-import { fetchPosts, fetchPost } from "@seriphxyz/core";
+import { fetchPosts, fetchPost } from "@jamwidgets/core";
 
 // Fetch all published posts
 const posts = await fetchPosts({
@@ -205,7 +205,7 @@ import {
   PollController,
   AnnouncementsController,
   ViewCountsController,
-} from "@seriphxyz/core";
+} from "@jamwidgets/core";
 
 // Example: Subscribe controller
 const controller = new SubscribeController({ siteKey: "your-key" });
@@ -243,7 +243,7 @@ controller.reset();
 Reactions and views track visitors using localStorage. For authenticated users, you can set a custom visitor ID:
 
 ```ts
-import { setVisitorId, getVisitorId } from "@seriphxyz/core";
+import { setVisitorId, getVisitorId } from "@jamwidgets/core";
 
 // Set custom visitor ID (e.g., for logged-in users)
 setVisitorId("user-123");
@@ -261,15 +261,15 @@ All types are exported for TypeScript users:
 
 ```ts
 import type {
-  SeriphConfig,
+  JamWidgetsConfig,
   Comment,
   ReactionCounts,
-  SeriphPost,
+  JamWidgetsPost,
   Poll,
   Announcement,
   FeedbackType,
   ControllerStatus,
-} from "@seriphxyz/core";
+} from "@jamwidgets/core";
 ```
 
 ## License

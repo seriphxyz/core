@@ -1,28 +1,31 @@
 /**
- * @seriphxyz/core
+ * @jamwidgets/core
  *
- * Framework-agnostic API client, types, and controllers for Seriph widgets.
- * Use this package directly or through framework-specific wrappers like @seriphxyz/astro.
+ * Framework-agnostic API client, types, and controllers for Jamwidgets.
+ * Use this package directly or through framework-specific wrappers like @jamwidgets/astro.
  */
 
 // =============================================================================
 // Constants
 // =============================================================================
 
-export const DEFAULT_ENDPOINT = "https://seriph.xyz";
+export const DEFAULT_ENDPOINT = "https://jamwidgets.com";
 export const API_PATH = "/api/v1";
-export const VISITOR_STORAGE_KEY = "seriph_visitor_id";
+export const VISITOR_STORAGE_KEY = "jamwidgets_visitor_id";
 
 // =============================================================================
 // Types
 // =============================================================================
 
-export interface SeriphConfig {
+export interface JamWidgetsConfig {
   /** Your site key (required) */
   siteKey: string;
-  /** Base URL of your Seriph instance (default: 'https://seriph.xyz') */
+  /** Base URL of your Jamwidgets instance (default: 'https://jamwidgets.com') */
   endpoint?: string;
 }
+
+/** @deprecated Use JamWidgetsConfig instead */
+export type SeriphConfig = JamWidgetsConfig;
 
 export interface Comment {
   id: string;
@@ -49,7 +52,7 @@ export interface SubscribeResponse {
   message: string;
 }
 
-export interface SeriphPost {
+export interface JamwidgetsPost {
   id: string;
   title: string;
   slug: string;
@@ -65,6 +68,9 @@ export interface SeriphPost {
   publishedAt: string;
 }
 
+/** @deprecated Use JamwidgetsPost instead */
+export type SeriphPost = JamwidgetsPost;
+
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -76,14 +82,16 @@ export function buildUrl(endpoint: string | undefined, path: string): string {
 }
 
 /**
- * Read Seriph config from meta tags in the document head.
+ * Read Jamwidgets config from meta tags in the document head.
  * Looks for:
- * - <meta name="seriph-site-key" content="sk-xxx" />
- * - <meta name="seriph-endpoint" content="https://..." /> (optional)
+ * - <meta name="jamwidgets-site-key" content="sk-xxx" />
+ * - <meta name="jamwidgets-endpoint" content="https://..." /> (optional)
+ *
+ * Also supports legacy meta tag names (seriph-site-key, seriph-endpoint) for backward compatibility.
  *
  * @example
  * // In your HTML head:
- * <meta name="seriph-site-key" content="sk-xxx" />
+ * <meta name="jamwidgets-site-key" content="sk-xxx" />
  *
  * // In your JS:
  * const config = getConfigFromMeta();
@@ -96,21 +104,24 @@ export function getConfigFromMeta(): { siteKey: string; endpoint?: string } | nu
     return null;
   }
 
-  const siteKeyMeta = document.querySelector('meta[name="seriph-site-key"]');
+  // Try new meta tag names first, fall back to legacy names
+  const siteKeyMeta = document.querySelector('meta[name="jamwidgets-site-key"]') ||
+                      document.querySelector('meta[name="seriph-site-key"]');
   const siteKey = siteKeyMeta?.getAttribute("content");
 
   if (!siteKey) {
     return null;
   }
 
-  const endpointMeta = document.querySelector('meta[name="seriph-endpoint"]');
+  const endpointMeta = document.querySelector('meta[name="jamwidgets-endpoint"]') ||
+                       document.querySelector('meta[name="seriph-endpoint"]');
   const endpoint = endpointMeta?.getAttribute("content") || undefined;
 
   return { siteKey, endpoint };
 }
 
 /** Get site key from config, with fallback to meta tag */
-export function getSiteKey(config: SeriphConfig): string {
+export function getSiteKey(config: JamWidgetsConfig): string {
   if (config.siteKey) {
     return config.siteKey;
   }
@@ -122,18 +133,18 @@ export function getSiteKey(config: SeriphConfig): string {
   }
 
   throw new Error(
-    "siteKey is required. Either pass it as a prop or add <meta name=\"seriph-site-key\" content=\"your-key\" /> to your document head."
+    "siteKey is required. Either pass it as a prop or add <meta name=\"jamwidgets-site-key\" content=\"your-key\" /> to your document head."
   );
 }
 
 /** Resolve full config, merging props with meta tag fallbacks */
-export function resolveConfig(config: Partial<SeriphConfig>): SeriphConfig {
+export function resolveConfig(config: Partial<JamWidgetsConfig>): JamWidgetsConfig {
   const metaConfig = getConfigFromMeta();
 
   const siteKey = config.siteKey || metaConfig?.siteKey;
   if (!siteKey) {
     throw new Error(
-      "siteKey is required. Either pass it as a prop or add <meta name=\"seriph-site-key\" content=\"your-key\" /> to your document head."
+      "siteKey is required. Either pass it as a prop or add <meta name=\"jamwidgets-site-key\" content=\"your-key\" /> to your document head."
     );
   }
 
@@ -208,6 +219,9 @@ function getHeaders(siteKey: string): Record<string, string> {
     visitorId = generateUUID();
   }
   return {
+    "X-Jamwidgets-Key": siteKey,
+    "X-Jamwidgets-Visitor": visitorId,
+    // Legacy headers for backward compatibility with older server versions
     "X-Seriph-Key": siteKey,
     "X-Seriph-Visitor": visitorId,
   };
@@ -217,7 +231,7 @@ function getHeaders(siteKey: string): Record<string, string> {
 // API Functions - Forms
 // =============================================================================
 
-export interface SubmitFormOptions extends SeriphConfig {
+export interface SubmitFormOptions extends JamWidgetsConfig {
   formSlug: string;
   data: Record<string, unknown>;
   /** Form load timestamp for spam detection (auto-set if not provided) */
@@ -254,7 +268,7 @@ export async function submitForm(options: SubmitFormOptions): Promise<FormSubmit
 // API Functions - Comments
 // =============================================================================
 
-export interface FetchCommentsOptions extends SeriphConfig {
+export interface FetchCommentsOptions extends JamWidgetsConfig {
   pageId: string;
 }
 
@@ -275,7 +289,7 @@ export async function fetchComments(options: FetchCommentsOptions): Promise<Comm
   return data.comment_threads || [];
 }
 
-export interface PostCommentOptions extends SeriphConfig {
+export interface PostCommentOptions extends JamWidgetsConfig {
   pageId: string;
   authorName: string;
   authorEmail?: string;
@@ -314,7 +328,7 @@ export async function postComment(options: PostCommentOptions): Promise<Comment>
 // API Functions - Reactions
 // =============================================================================
 
-export interface FetchReactionsOptions extends SeriphConfig {
+export interface FetchReactionsOptions extends JamWidgetsConfig {
   pageId: string;
 }
 
@@ -344,7 +358,7 @@ export async function fetchReactions(options: FetchReactionsOptions): Promise<Fe
   };
 }
 
-export interface AddReactionOptions extends SeriphConfig {
+export interface AddReactionOptions extends JamWidgetsConfig {
   pageId: string;
   reactionType?: string;
 }
@@ -373,7 +387,7 @@ export async function addReaction(
   return data.reaction;
 }
 
-export interface RemoveReactionOptions extends SeriphConfig {
+export interface RemoveReactionOptions extends JamWidgetsConfig {
   pageId: string;
   reactionType?: string;
 }
@@ -406,7 +420,7 @@ export async function removeReaction(
 // API Functions - Subscriptions
 // =============================================================================
 
-export interface SubscribeOptions extends SeriphConfig {
+export interface SubscribeOptions extends JamWidgetsConfig {
   email: string;
 }
 
@@ -435,14 +449,14 @@ export async function subscribe(options: SubscribeOptions): Promise<SubscribeRes
 // API Functions - Posts
 // =============================================================================
 
-export interface FetchPostsOptions extends SeriphConfig {
+export interface FetchPostsOptions extends JamWidgetsConfig {
   /** Filter posts by tag */
   tag?: string;
   /** Maximum number of posts to fetch (default: 500) */
   limit?: number;
 }
 
-export async function fetchPosts(options: FetchPostsOptions): Promise<SeriphPost[]> {
+export async function fetchPosts(options: FetchPostsOptions): Promise<JamwidgetsPost[]> {
   const { endpoint, tag, limit = 500 } = options;
   const siteKey = getSiteKey(options);
   const baseUrl = (endpoint || DEFAULT_ENDPOINT).replace(/\/+$/, "") + API_PATH;
@@ -465,12 +479,12 @@ export async function fetchPosts(options: FetchPostsOptions): Promise<SeriphPost
   return data.posts;
 }
 
-export interface FetchPostOptions extends SeriphConfig {
+export interface FetchPostOptions extends JamWidgetsConfig {
   /** The post slug to fetch */
   slug: string;
 }
 
-export async function fetchPost(options: FetchPostOptions): Promise<SeriphPost | null> {
+export async function fetchPost(options: FetchPostOptions): Promise<JamwidgetsPost | null> {
   const { endpoint, slug } = options;
   const siteKey = getSiteKey(options);
   const baseUrl = (endpoint || DEFAULT_ENDPOINT).replace(/\/+$/, "") + API_PATH;
@@ -495,7 +509,7 @@ export async function fetchPost(options: FetchPostOptions): Promise<SeriphPost |
 // API Functions - Waitlist
 // =============================================================================
 
-export interface JoinWaitlistOptions extends SeriphConfig {
+export interface JoinWaitlistOptions extends JamWidgetsConfig {
   email: string;
   name?: string;
   /** Where the signup came from (e.g., "homepage", "blog") */
@@ -534,7 +548,7 @@ export async function joinWaitlist(options: JoinWaitlistOptions): Promise<JoinWa
 // API Functions - Views
 // =============================================================================
 
-export interface ViewCountsOptions extends SeriphConfig {
+export interface ViewCountsOptions extends JamWidgetsConfig {
   pageId: string;
 }
 
@@ -589,7 +603,7 @@ export async function recordView(options: ViewCountsOptions): Promise<RecordView
 
 export type FeedbackType = "bug" | "feature" | "general";
 
-export interface SubmitFeedbackOptions extends SeriphConfig {
+export interface SubmitFeedbackOptions extends JamWidgetsConfig {
   type: FeedbackType;
   content: string;
   email?: string;
@@ -660,7 +674,7 @@ export interface PollWithResults extends Poll {
   userVotes?: string[];
 }
 
-export interface FetchPollOptions extends SeriphConfig {
+export interface FetchPollOptions extends JamWidgetsConfig {
   slug: string;
 }
 
@@ -681,7 +695,7 @@ export async function fetchPoll(options: FetchPollOptions): Promise<PollWithResu
   return data.poll_with_results;
 }
 
-export interface VotePollOptions extends SeriphConfig {
+export interface VotePollOptions extends JamWidgetsConfig {
   slug: string;
   selectedOptions: string[];
 }
@@ -729,7 +743,7 @@ export interface Announcement {
   isDismissible: boolean;
 }
 
-export interface FetchAnnouncementsOptions extends SeriphConfig {}
+export interface FetchAnnouncementsOptions extends JamWidgetsConfig {}
 
 export async function fetchAnnouncements(options: FetchAnnouncementsOptions): Promise<Announcement[]> {
   const { endpoint } = options;
@@ -748,7 +762,7 @@ export async function fetchAnnouncements(options: FetchAnnouncementsOptions): Pr
   return data.announcements || [];
 }
 
-export interface DismissAnnouncementOptions extends SeriphConfig {
+export interface DismissAnnouncementOptions extends JamWidgetsConfig {
   announcementId: number;
 }
 
@@ -826,11 +840,11 @@ export interface ControllerListener<T> {
  * await controller.submit('user@example.com');
  */
 export class SubscribeController {
-  private config: SeriphConfig;
+  private config: JamWidgetsConfig;
   private listeners: Set<ControllerListener<SubscribeState>> = new Set();
   private _state: SubscribeState = { status: "idle", message: null, error: null };
 
-  constructor(config: SeriphConfig) {
+  constructor(config: JamWidgetsConfig) {
     this.config = config;
   }
 
@@ -891,11 +905,11 @@ export class SubscribeController {
  * await controller.join('user@example.com', { name: 'John', source: 'homepage' });
  */
 export class WaitlistController {
-  private config: SeriphConfig;
+  private config: JamWidgetsConfig;
   private listeners: Set<ControllerListener<WaitlistState>> = new Set();
   private _state: WaitlistState = { status: "idle", message: null, position: null, error: null };
 
-  constructor(config: SeriphConfig) {
+  constructor(config: JamWidgetsConfig) {
     this.config = config;
   }
 
@@ -955,13 +969,13 @@ export class WaitlistController {
  * Manages state without any DOM/framework dependencies.
  */
 export class FormController {
-  private config: SeriphConfig;
+  private config: JamWidgetsConfig;
   private formSlug: string;
   private listeners: Set<ControllerListener<FormState>> = new Set();
   private loadTime: number;
   private _state: FormState = { status: "idle", message: null, error: null };
 
-  constructor(config: SeriphConfig, formSlug: string) {
+  constructor(config: JamWidgetsConfig, formSlug: string) {
     this.config = config;
     this.formSlug = formSlug;
     this.loadTime = Math.floor(Date.now() / 1000);
@@ -1018,12 +1032,12 @@ export class FormController {
  * Manages state and counts without any DOM/framework dependencies.
  */
 export class ReactionsController {
-  private config: SeriphConfig;
+  private config: JamWidgetsConfig;
   private pageId: string;
   private listeners: Set<ControllerListener<ReactionsState>> = new Set();
   private _state: ReactionsState = { counts: {}, userReactions: [], status: "idle", error: null };
 
-  constructor(config: SeriphConfig, pageId: string) {
+  constructor(config: JamWidgetsConfig, pageId: string) {
     this.config = config;
     this.pageId = pageId;
   }
@@ -1105,12 +1119,12 @@ export class ReactionsController {
  * Manages state and comment list without any DOM/framework dependencies.
  */
 export class CommentsController {
-  private config: SeriphConfig;
+  private config: JamWidgetsConfig;
   private pageId: string;
   private listeners: Set<ControllerListener<CommentsState>> = new Set();
   private _state: CommentsState = { comments: [], status: "idle", error: null };
 
-  constructor(config: SeriphConfig, pageId: string) {
+  constructor(config: JamWidgetsConfig, pageId: string) {
     this.config = config;
     this.pageId = pageId;
   }
@@ -1184,11 +1198,11 @@ export interface FeedbackState {
  * Manages state without any DOM/framework dependencies.
  */
 export class FeedbackController {
-  private config: SeriphConfig;
+  private config: JamWidgetsConfig;
   private listeners: Set<ControllerListener<FeedbackState>> = new Set();
   private _state: FeedbackState = { status: "idle", message: null, error: null };
 
-  constructor(config: SeriphConfig) {
+  constructor(config: JamWidgetsConfig) {
     this.config = config;
   }
 
@@ -1254,12 +1268,12 @@ export interface PollState {
  * Manages poll state, voting, and results.
  */
 export class PollController {
-  private config: SeriphConfig;
+  private config: JamWidgetsConfig;
   private slug: string;
   private listeners: Set<ControllerListener<PollState>> = new Set();
   private _state: PollState = { poll: null, status: "idle", error: null };
 
-  constructor(config: SeriphConfig, slug: string) {
+  constructor(config: JamWidgetsConfig, slug: string) {
     this.config = config;
     this.slug = slug;
   }
@@ -1345,7 +1359,7 @@ export interface AnnouncementsState {
  * Manages announcement list and dismissals.
  */
 export class AnnouncementsController {
-  private config: SeriphConfig;
+  private config: JamWidgetsConfig;
   private listeners: Set<ControllerListener<AnnouncementsState>> = new Set();
   private _state: AnnouncementsState = {
     announcements: [],
@@ -1354,7 +1368,7 @@ export class AnnouncementsController {
     error: null,
   };
 
-  constructor(config: SeriphConfig) {
+  constructor(config: JamWidgetsConfig) {
     this.config = config;
   }
 
@@ -1431,12 +1445,12 @@ export interface ViewCountsState {
  * Tracks page views and unique visitors.
  */
 export class ViewCountsController {
-  private config: SeriphConfig;
+  private config: JamWidgetsConfig;
   private pageId: string;
   private listeners: Set<ControllerListener<ViewCountsState>> = new Set();
   private _state: ViewCountsState;
 
-  constructor(config: SeriphConfig, pageId: string) {
+  constructor(config: JamWidgetsConfig, pageId: string) {
     this.config = config;
     this.pageId = pageId;
     this._state = { pageId, views: 0, uniqueVisitors: 0, status: "idle", error: null };
